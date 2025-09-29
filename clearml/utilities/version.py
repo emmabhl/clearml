@@ -331,13 +331,19 @@ class Version(_BaseVersion):
             # Versions without a local segment should sort before those with one.
             local = inf
         else:
-            # Versions with a local segment need that segment parsed to implement
-            # the sorting rules in PEP440.
-            # - Alpha numeric segments sort before numeric segments
-            # - Alpha numeric segments sort lexicographically
-            # - Numeric segments sort numerically
-            # - Shorter versions sort before longer versions when the prefixes
-            #   match exactly
-            local = local[1]
+            # Normalize the full local tuple according to PEP 440:
+            # - lowercase string parts
+            # - convert purely numeric parts to integers
+            normalized = []
+            for part in local:
+                if isinstance(part, int):
+                    normalized.append(part)
+                else:
+                    part = part.lower()
+                    if part.isdigit():
+                        normalized.append(int(part))
+                    else:
+                        normalized.append(part)
+            local_key = tuple(normalized)
 
-        return epoch, release, pre, post, dev, local
+        return epoch, release, pre, post, dev, local_key
